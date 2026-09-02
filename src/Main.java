@@ -37,6 +37,9 @@ public class Main {
 
         List<Token> tokens = lexer.tokenize();
 
+        Parser parser = new Parser(tokens);
+        Ast.Program program = parser.parse();
+
 
         System.out.println("----- TOKENS -----");
 
@@ -56,6 +59,16 @@ public class Main {
 
             for (String error : lexer.getErrors()) {
 
+                System.out.println(error);
+            }
+        }
+
+        System.out.println("\n----- PARSER -----");
+        System.out.println("Parsed " + program.statements.size() + " top-level statement(s).");
+
+        if (!parser.getErrors().isEmpty()) {
+            System.out.println("\n----- PARSER ERRORS -----");
+            for (String error : parser.getErrors()) {
                 System.out.println(error);
             }
         }
