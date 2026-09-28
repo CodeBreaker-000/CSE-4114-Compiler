@@ -1,10 +1,128 @@
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 public class Main {
 
     public static void main(String[] args) {
 
-        String code = """
+        try {
+
+            String code = loadSource(args);
+
+
+            Lexer lexer = new Lexer(code);
+
+            List<Token> tokens =
+                    lexer.tokenize();
+
+            if (!lexer.getErrors().isEmpty()) {
+
+                printErrors(
+                        "LEXER ERRORS",
+                        lexer.getErrors()
+                );
+
+                return;
+            }
+
+
+
+            Parser parser =
+                    new Parser(tokens);
+
+            Ast.Program program =
+                    parser.parse();
+
+            if (!parser.getErrors().isEmpty()) {
+
+                printErrors(
+                        "PARSER ERRORS",
+                        parser.getErrors()
+                );
+
+                return;
+            }
+
+            SemanticAnalyzer semanticAnalyzer =
+                    new SemanticAnalyzer();
+
+            semanticAnalyzer.analyze(program);
+
+            if (semanticAnalyzer.hasErrors()) {
+
+                printErrors(
+                        "SEMANTIC ERRORS",
+                        semanticAnalyzer.getErrors()
+                );
+
+                return;
+            }
+
+            CodeGenerator generator =
+                    new CodeGenerator();
+
+            String javaCode =
+                    generator.generate(program);
+
+
+
+            Path outputFile =
+                    Path.of(
+                            "GeneratedProgram.java"
+                    );
+
+            Files.writeString(
+                    outputFile,
+                    javaCode,
+                    StandardCharsets.UTF_8
+            );
+
+
+            System.out.println(
+                    "Compilation successful."
+            );
+
+            System.out.println(
+                    "Generated target file: "
+                            + outputFile
+                            .toAbsolutePath()
+            );
+
+        } catch (IOException exception) {
+
+            System.err.println(
+                    "File Error: "
+                            + exception.getMessage()
+            );
+
+        } catch (RuntimeException exception) {
+
+            System.err.println(
+                    "Compiler Error: "
+                            + exception.getMessage()
+            );
+        }
+    }
+
+
+    private static String loadSource(
+            String[] args
+    ) throws IOException {
+
+
+        if (args.length > 0) {
+
+            return Files.readString(
+                    Path.of(args[0]),
+                    StandardCharsets.UTF_8
+            );
+        }
+
+
+        return """
 
                 # Sample Bangla program
 
@@ -13,12 +131,14 @@ public class Main {
 
                 যুক্তি বড় <- x > y;
 
-                শর্ত (x > y) {
+                শর্ত (বড়) {
                     প্রকাশ(x);
                 }
+
                 অন্যশর্ত (x == y) {
                     প্রকাশ(0);
                 }
+
                 অন্যথা {
                     প্রকাশ(y);
                 }
@@ -30,60 +150,23 @@ public class Main {
                 প্রকাশ(x);
 
                 """;
+    }
 
 
-        Lexer lexer = new Lexer(code);
+    private static void printErrors(
+            String title,
+            List<String> errors
+    ) {
 
+        System.out.println(
+                "----- "
+                        + title
+                        + " -----"
+        );
 
-        List<Token> tokens = lexer.tokenize();
+        for (String error : errors) {
 
-        Parser parser = new Parser(tokens);
-        Ast.Program program = parser.parse();
-
-        SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
-        semanticAnalyzer.analyze(program);
-
-
-        System.out.println("----- TOKENS -----");
-
-
-        for (Token token : tokens) {
-
-            System.out.println(token);
-        }
-
-
-        if (!lexer.getErrors().isEmpty()) {
-
-            System.out.println(
-                    "\n----- LEXER ERRORS -----"
-            );
-
-
-            for (String error : lexer.getErrors()) {
-
-                System.out.println(error);
-            }
-        }
-
-        System.out.println("\n----- PARSER -----");
-        System.out.println("Parsed " + program.statements.size() + " top-level statement(s).");
-
-        if (!parser.getErrors().isEmpty()) {
-            System.out.println("\n----- PARSER ERRORS -----");
-            for (String error : parser.getErrors()) {
-                System.out.println(error);
-            }
-        }
-
-        System.out.println("\n----- SEMANTIC ANALYSIS -----");
-
-        if (semanticAnalyzer.hasErrors()) {
-            for (String error : semanticAnalyzer.getErrors()) {
-                System.out.println(error);
-            }
-        } else {
-            System.out.println("Semantic analysis passed. No semantic errors.");
+            System.out.println(error);
         }
     }
 }

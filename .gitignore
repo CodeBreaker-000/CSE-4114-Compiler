@@ -1,0 +1,9 @@
+# Java compiled files
+*.class
+
+# Generated compiler output
+GeneratedProgram.java
+
+# IDE files
+.vscode/
+.idea/
