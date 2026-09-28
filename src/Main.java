@@ -40,6 +40,9 @@ public class Main {
         Parser parser = new Parser(tokens);
         Ast.Program program = parser.parse();
 
+        SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+        semanticAnalyzer.analyze(program);
+
 
         System.out.println("----- TOKENS -----");
 
@@ -71,6 +74,16 @@ public class Main {
             for (String error : parser.getErrors()) {
                 System.out.println(error);
             }
+        }
+
+        System.out.println("\n----- SEMANTIC ANALYSIS -----");
+
+        if (semanticAnalyzer.hasErrors()) {
+            for (String error : semanticAnalyzer.getErrors()) {
+                System.out.println(error);
+            }
+        } else {
+            System.out.println("Semantic analysis passed. No semantic errors.");
         }
     }
 }
